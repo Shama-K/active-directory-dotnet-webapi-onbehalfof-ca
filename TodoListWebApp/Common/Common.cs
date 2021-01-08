@@ -23,13 +23,13 @@ namespace TodoListWebApp
         /// <returns></returns>
         public static IConfidentialClientApplication BuildConfidentialClientApplication()
         {
-            _tokenAcquisition =  new TokenAcquisition(SetOptions.SetMicrosoftIdOptions(), SetOptions.SetConClientAppOptions());
+            _tokenAcquisition =  new TokenAcquisition(SetOptions.SetMicrosoftIdOptions(), SetOptions.SetConClientAppOptions(), CacheType.InMemoryCache);
             var app = _tokenAcquisition.BuildConfidentialClientApplicationAsync().Result;
             return app;
         }
         public static void RemoveAccount()
         {
-            _tokenAcquisition = new TokenAcquisition(SetOptions.SetMicrosoftIdOptions(), SetOptions.SetConClientAppOptions());
+            _tokenAcquisition = new TokenAcquisition(SetOptions.SetMicrosoftIdOptions(), SetOptions.SetConClientAppOptions(), CacheType.InMemoryCache);
             _tokenAcquisition.RemoveAccount().ConfigureAwait(false);
         }
     }

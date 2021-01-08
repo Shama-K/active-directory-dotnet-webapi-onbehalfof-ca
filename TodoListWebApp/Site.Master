@@ -37,35 +37,35 @@
             </Scripts>
         </asp:ScriptManager>
 
-        <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="navbar navbar-dark bg-dark fixed-top navbar-expand-md">
             <div class="container">
-                <div class="navbar-header">
-                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <%--<div class="navbar-header">--%>
+                    <button type="button" class="navbar-toggler" data-toggle="collapse" data-target=".navbar-collapse">
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a id="A1" class="navbar-brand" runat="server" href="~/">Application name</a>
-                </div>
+                    <a id="A1" class="navbar-brand" runat="server" href="~/">WebAppCallsWebAPI</a>
+                <%--</div>--%>
                 <div class="navbar-collapse collapse">
                     <ul class="nav navbar-nav">
-                        <li><a id="A2" runat="server" href="~/">Home</a></li>
-                        <li><a id="A3" runat="server" href="~/About">About</a></li>
-                        <li><a id="A4" runat="server" href="~/TodoList">TodoList</a></li>
+                        <li><a id="A2" class="nav-link" runat="server" href="~/">Home</a></li>
+                        <li><a id="A3" class="nav-link" runat="server" href="~/About">About</a></li>
+                        <li><a id="A4" class="nav-link" runat="server" href="~/TodoList/Index">TodoList</a></li>
                     </ul>
                     <asp:LoginView runat="server" ViewStateMode="Disabled">
                         <LoggedInTemplate>
-                            <ul class="nav navbar-nav  navbar-right">
+                            <ul class="nav navbar-nav navbar-right">
                                 <li class="navbar-text">Hello, <%: Context.User.Identity.Name  %>!</li>
-                                <li>
+                                <li class="nav-link">
                                     <asp:LoginStatus runat="server" LogoutAction="Redirect" LogoutText="Sign out"
                                         LogoutPageUrl="~/" OnLoggingOut="Unnamed_LoggingOut" />
                                 </li>
                             </ul>
                         </LoggedInTemplate>
                         <AnonymousTemplate>
-                            <ul class="nav navbar-nav  navbar-right">
-                             <li><asp:LinkButton Text="Sign in" runat="server" OnClick="Unnamed_Click" />
+                            <ul class="nav navbar-nav navbar-right">
+                             <li class="nav-link"><asp:LinkButton Text="Sign in" runat="server" OnClick="Unnamed_Click" />
                              </li>
                             </ul>
                         </AnonymousTemplate>

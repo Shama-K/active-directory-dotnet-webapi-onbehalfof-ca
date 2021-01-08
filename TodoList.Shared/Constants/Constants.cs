@@ -124,4 +124,10 @@ namespace TodoList.Shared
         internal const string LoginHintParameter = "loginHint";
         internal const string DomainHintParameter = "domainHint";
     }
+    public enum CacheType
+    {
+        DistributedCache,
+        FileCache,
+        InMemoryCache
+    }
 }

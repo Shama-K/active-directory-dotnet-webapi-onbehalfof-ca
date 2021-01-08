@@ -5,13 +5,10 @@ using System.Net;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Identity.Client;
-using Microsoft.Identity.Web;
-using Microsoft.Identity.Web.TokenCacheProviders;
-using Microsoft.Identity.Web.TokenCacheProviders.InMemory;
 using Microsoft.Net.Http.Headers;
+using TodoList.Shared.TokenCacheProviders;
 
 namespace TodoList.Shared
 {
@@ -21,15 +18,20 @@ namespace TodoList.Shared
 
         private readonly MicrosoftIdentityOptions _microsoftIdentityOptions=new MicrosoftIdentityOptions();
         private readonly ConfidentialClientApplicationOptions _applicationOptions=new ConfidentialClientApplicationOptions();
-       
+        CacheType _cacheType;
         public TokenAcquisition(MicrosoftIdentityOptions microsoftIdentityOptions, ConfidentialClientApplicationOptions applicationOptions)
 
         {
             _microsoftIdentityOptions = microsoftIdentityOptions;
             _applicationOptions=applicationOptions;
         }
+        public TokenAcquisition(MicrosoftIdentityOptions microsoftIdentityOptions, ConfidentialClientApplicationOptions applicationOptions, CacheType cacheType)
 
-
+        {
+            _microsoftIdentityOptions = microsoftIdentityOptions;
+            _applicationOptions = applicationOptions;
+            _cacheType = cacheType;
+        }
         /// <summary>
         /// Used in web APIs (no user interaction).
         /// Replies to the client through the HTTP response by sending a 403 (forbidden) and populating the 'WWW-Authenticate' header so that
@@ -139,31 +141,42 @@ namespace TodoList.Shared
 
                 string authority;
 
-                if (_microsoftIdentityOptions.IsB2C)
-                {
-                   // authority = $"{_applicationOptions.Instance}{ClaimConstants.Tfp}/{_microsoftIdentityOptions.Domain}/{_microsoftIdentityOptions.DefaultUserFlow}";
-                   // builder.WithB2CAuthority(authority);
-                }
-                else
-                {
-                    authority = $"{_applicationOptions.Instance}{_applicationOptions.TenantId}/";
-                    builder.WithAuthority(authority);
-                }
+                authority = $"{_applicationOptions.Instance}{_applicationOptions.TenantId}/";
+                builder.WithAuthority(authority);
 
 
                 IConfidentialClientApplication app = builder.Build();
                 _application = app;
 
+                SetCache(app.UserTokenCache);
+
                 // Initialize token cache providers
                 // After the ConfidentialClientApplication is created, we overwrite its default UserTokenCache serialization with our implementation
-                IMsalTokenCacheProvider memoryTokenCacheProvider = CreateTokenCacheSerializer();
-                await memoryTokenCacheProvider.InitializeAsync(app.UserTokenCache);
+                //TokenCacheHelper.EnableSerialization(app.UserTokenCache);
+                //MSALPerUserMemoryCache mSALPerUserMemoryCache = new MSALPerUserMemoryCache(app.UserTokenCache);
                 return app;
             }
             catch (Exception ex)
             {
                 throw;
             }
+        }
+
+        private void SetCache(ITokenCache tokenCache)
+        {
+
+            if (_cacheType == CacheType.InMemoryCache)
+            {
+                MSALPerUserMemoryCache mSALPerUserMemoryCache = new MSALPerUserMemoryCache(tokenCache);
+            }
+            else if (_cacheType == CacheType.FileCache)
+            {
+                TokenCacheHelper.EnableSerialization(tokenCache);
+            }
+            //else if (_cacheType == CacheType.DistributedCache)
+            //{
+
+            //}
         }
         public async Task<AuthenticationResult> GetUserTokenOnBehalfOfAsync(IEnumerable<string> requestedScopes)
         {
@@ -199,29 +212,18 @@ namespace TodoList.Shared
 
             _applicationOptions.Instance = _applicationOptions.Instance.TrimEnd('/') + "/";
         }
-        private static IMsalTokenCacheProvider CreateTokenCacheSerializer()
-        {
-            IServiceCollection services = new ServiceCollection();
-
-            // In memory token cache. Other forms of serialization are possible.
-            // See https://github.com/AzureAD/microsoft-identity-web/wiki/asp-net 
-            services.AddInMemoryTokenCaches();
-            IServiceProvider serviceProvider = services.BuildServiceProvider();
-            IMsalTokenCacheProvider msalTokenCacheProvider = serviceProvider.GetRequiredService<IMsalTokenCacheProvider>();
-            return msalTokenCacheProvider;
-        }
         public async Task RemoveAccount()
         {
             string authority = $"{_applicationOptions.Instance}{_applicationOptions.TenantId}/";
-            IConfidentialClientApplication clientapp = BuildConfidentialClientApplicationAsync().Result;
+            IConfidentialClientApplication app = BuildConfidentialClientApplicationAsync().Result;
 
             // We only clear the user's tokens.
-            IMsalTokenCacheProvider memoryTokenCacheProvider = CreateTokenCacheSerializer();
-            await memoryTokenCacheProvider.InitializeAsync(clientapp.UserTokenCache);
-            var userAccount = await clientapp.GetAccountAsync(ClaimsPrincipal.Current.GetAccountId());
+            MSALPerUserMemoryCache mSALPerUserMemoryCache = new MSALPerUserMemoryCache(app.UserTokenCache);
+            
+            var userAccount = await app.GetAccountAsync(ClaimsPrincipal.Current.GetAccountId());
             if (userAccount != null)
             {
-                await clientapp.RemoveAsync(userAccount);
+                await app.RemoveAsync(userAccount);
             }
         }
     }

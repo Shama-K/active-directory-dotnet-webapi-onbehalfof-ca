@@ -1,18 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Configuration;
-using System.Globalization;
-using System.Linq;
-using System.Web;
 using Owin;
 using Microsoft.Owin.Extensions;
 using Microsoft.Owin.Security;
 using Microsoft.Owin.Security.Cookies;
 using Microsoft.Owin.Security.OpenIdConnect;
-using System.Threading.Tasks;
-using Microsoft.Owin.Security.Notifications;
-using Microsoft.Identity.Client;
-using System.Security.Claims;
 
 namespace TodoListWebApp
 {

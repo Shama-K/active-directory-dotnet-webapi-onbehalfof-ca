@@ -7,13 +7,15 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Web;
+using System.Web.Script.Serialization;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using TodoList.Shared;
+using TodoListWebApp.Models;
 
-namespace TodoListWebApp
+namespace TodoListWebApp.TodoList
 {
-    public partial class TodoList : System.Web.UI.Page
+    public partial class Index : System.Web.UI.Page
     {
         private HttpClient _httpClient = new HttpClient();
         private string todoListBaseAddress = "https://localhost:44321";
@@ -26,6 +28,14 @@ namespace TodoListWebApp
         {
             PrepareAuthenticatedClientAsync().ConfigureAwait(false);
             HttpResponseMessage response = _httpClient.GetAsync(todoListBaseAddress + "/api/todolist").Result;
+            if (response != null && response.StatusCode== System.Net.HttpStatusCode.OK)
+            {
+                string s = response.Content.ReadAsStringAsync().Result;
+                JavaScriptSerializer serializer = new JavaScriptSerializer();
+                List<TodoItem> toDoArray = serializer.Deserialize<List<TodoItem>>(s);
+                grdTodoList.DataSource = toDoArray;
+                grdTodoList.DataBind();
+            }
         }
         private async System.Threading.Tasks.Task PrepareAuthenticatedClientAsync()
         {
@@ -46,6 +56,16 @@ namespace TodoListWebApp
             {
                 throw ex;
             }
+        }
+
+        protected void grdTodoList_RowDeleting(object sender, GridViewDeleteEventArgs e)
+        {
+
+        }
+
+        protected void grdTodoList_RowEditing(object sender, GridViewEditEventArgs e)
+        {
+
         }
     }
 }
