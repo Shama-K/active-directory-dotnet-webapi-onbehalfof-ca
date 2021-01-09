@@ -64,7 +64,6 @@ namespace TodoListClient
         private static string aadInstance = ConfigurationManager.AppSettings["ida:AADInstance"];
         private static string tenant = ConfigurationManager.AppSettings["ida:Tenant"];
         private static string clientId = ConfigurationManager.AppSettings["ida:ClientId"];
-        Uri redirectUri = new Uri(ConfigurationManager.AppSettings["ida:RedirectUri"]);
 
         private static string authority = String.Format(CultureInfo.InvariantCulture, aadInstance, tenant);
 
@@ -72,7 +71,6 @@ namespace TodoListClient
         // To authenticate to the To Do list service, the client needs to know the service's App ID URI.
         // To contact the To Do list service we need it's URL as well.
         //
-        private static string todoListResourceId = ConfigurationManager.AppSettings["todo:TodoListResourceId"];
         private static string todoListBaseAddress = ConfigurationManager.AppSettings["todo:TodoListBaseAddress"];
         private static string[] scopes = { ConfigurationManager.AppSettings["TodoListServiceScope"] };
 

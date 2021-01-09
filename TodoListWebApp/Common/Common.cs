@@ -1,13 +1,12 @@
 ﻿using Microsoft.Identity.Client;
 using TodoList.Shared;
 using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Globalization;
-using System.Linq;
 using System.Security.Claims;
 using System.Web;
 using System.Threading.Tasks;
+using Microsoft.Owin.Security.OpenIdConnect;
+using Microsoft.Owin.Security;
+using Microsoft.Owin.Security.Notifications;
 
 namespace TodoListWebApp
 {
@@ -23,7 +22,7 @@ namespace TodoListWebApp
         /// <returns></returns>
         public static IConfidentialClientApplication BuildConfidentialClientApplication()
         {
-            _tokenAcquisition =  new TokenAcquisition(SetOptions.SetMicrosoftIdOptions(), SetOptions.SetConClientAppOptions(), CacheType.InMemoryCache);
+            _tokenAcquisition = new TokenAcquisition(SetOptions.SetMicrosoftIdOptions(), SetOptions.SetConClientAppOptions(), CacheType.InMemoryCache);
             var app = _tokenAcquisition.BuildConfidentialClientApplicationAsync().Result;
             return app;
         }
@@ -32,28 +31,73 @@ namespace TodoListWebApp
             _tokenAcquisition = new TokenAcquisition(SetOptions.SetMicrosoftIdOptions(), SetOptions.SetConClientAppOptions(), CacheType.InMemoryCache);
             _tokenAcquisition.RemoveAccount().ConfigureAwait(false);
         }
-    }
-    public class SetOptions
-    {
-        public static string instance = ConfigurationManager.AppSettings["ida:Instance"];
-        public static string TodoListScope = ConfigurationManager.AppSettings["ida:TodoListScope"];
-        private static MicrosoftIdentityOptions IdentityOptions = new MicrosoftIdentityOptions();
-        private static ConfidentialClientApplicationOptions ApplicationOptions = new ConfidentialClientApplicationOptions();
-
-        public static ConfidentialClientApplicationOptions SetConClientAppOptions()
+        public static async Task<AuthenticationResult> GetAccessTokenForUserAsync()
         {
-            ApplicationOptions.Instance = instance;
-            ApplicationOptions.TenantId = AuthenticationConfig.TenantId;
-            ApplicationOptions.RedirectUri = AuthenticationConfig.RedirectUri;
-            ApplicationOptions.ClientId = AuthenticationConfig.ClientId;
-            return ApplicationOptions;
+            var app = BuildConfidentialClientApplication();
+            AuthenticationResult result = null;
+            IAccount account = await app.GetAccountAsync(ClaimsPrincipal.Current.GetAccountId());
+            try
+            {
+                result = await app.AcquireTokenSilent(new[] { SetOptions.TodoListScope }, account)
+                   .ExecuteAsync();
+            }
+            catch (MsalUiRequiredException ex)
+            {
+                IncrementalConsentExceptionHandler(ex);
+            }
+            return result;
         }
-        public static MicrosoftIdentityOptions SetMicrosoftIdOptions()
+        public static void IncrementalConsentExceptionHandler(MsalUiRequiredException ex)
         {
-            IdentityOptions.ClientId = AuthenticationConfig.ClientId;
-            IdentityOptions.ClientSecret = AuthenticationConfig.ClientSecret;
-            IdentityOptions.RedirectUri = AuthenticationConfig.RedirectUri;
-            return IdentityOptions;
+            string redirectUri = HttpContext.Current.Request.Url.ToString();
+
+            if (CanBeSolvedByReSignInOfUser(ex))
+            {
+                HttpContext.Current.GetOwinContext().Authentication.Challenge(
+                   new AuthenticationProperties { RedirectUri = redirectUri },
+                   OpenIdConnectAuthenticationDefaults.AuthenticationType);
+            }
+        }
+        private static bool CanBeSolvedByReSignInOfUser(MsalUiRequiredException ex)
+        {
+            if (ex == null)
+            {
+                throw new ArgumentNullException(nameof(ex));
+            }
+
+            // ex.ErrorCode != MsalUiRequiredException.UserNullError indicates a cache problem.
+            return ex.ErrorCode.ContainsAny(new[] { MsalError.UserNullError, MsalError.InvalidGrantError });
+        }
+        public static OpenIdConnectAuthenticationOptions GetOpenIdConnectAuthenticationOptions()
+        {
+            return new OpenIdConnectAuthenticationOptions
+            {
+                ClientId = AuthenticationConfig.ClientId,
+                ClientSecret = AuthenticationConfig.ClientSecret,
+                Authority = AuthenticationConfig.Authority,
+                RedirectUri = AuthenticationConfig.PostLogoutRedirectUri,
+                PostLogoutRedirectUri = AuthenticationConfig.PostLogoutRedirectUri,
+                ResponseType = "code",
+                Scope = "openid profile offline_access " + SetOptions.TodoListScope,
+                Notifications = new OpenIdConnectAuthenticationNotifications()
+                {
+                    AuthorizationCodeReceived = OnAuthorizationCodeReceived,
+                    AuthenticationFailed = (context) =>
+                    {
+                        return Task.FromResult(0);
+                    }
+                }
+            };
+        }
+        private static async Task OnAuthorizationCodeReceived(AuthorizationCodeReceivedNotification context)
+        {
+            // Call MSAL.NET AcquireTokenByAuthorizationCode
+            var application = Common.BuildConfidentialClientApplication();
+            var result = await application.AcquireTokenByAuthorizationCode(new[] { SetOptions.TodoListScope },
+                                                                     context.ProtocolMessage.Code)
+                                    .ExecuteAsync();
+
+            context.HandleCodeRedemption(null, result.IdToken);
         }
     }
 }

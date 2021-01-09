@@ -34,13 +34,10 @@ namespace TodoListWebApp
 
         public static string AADInstance { get; } = ConfigurationManager.AppSettings["ida:AADInstance"];
 
-        /// <summary>
-        /// The authority
-        /// </summary>
-       // public static string Authority = string.Format(CultureInfo.InvariantCulture, AADInstance, "common", "/v2.0");
         public static string TenantId = ConfigurationManager.AppSettings["ida:TenantId"];
 
         public static string Authority = String.Format(CultureInfo.InvariantCulture, AADInstance, AuthenticationConfig.TenantId);
-
+      
+        public static string PostLogoutRedirectUri = ConfigurationManager.AppSettings["ida:PostLogoutRedirectUri"];
     }
 }

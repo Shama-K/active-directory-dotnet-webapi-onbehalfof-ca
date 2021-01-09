@@ -1,4 +1,5 @@
 ﻿using Microsoft.Identity.Client;
+using System;
 using System.Security.Claims;
 
 namespace TodoList.Shared
@@ -74,6 +75,67 @@ namespace TodoList.Shared
             }
 
             return null;
+        }
+        /// <summary>
+        /// Gets the login-hint associated with a <see cref="ClaimsPrincipal"/>.
+        /// </summary>
+        /// <param name="claimsPrincipal">Identity for which to complete the login-hint.</param>
+        /// <returns>The login hint for the identity, or <c>null</c> if it cannot be found.</returns>
+        public static string GetLoginHint(this ClaimsPrincipal claimsPrincipal)
+        {
+            return GetDisplayName(claimsPrincipal);
+        }
+        /// <summary>
+        /// Get the display name for the signed-in user, from the <see cref="ClaimsPrincipal"/>.
+        /// </summary>
+        /// <param name="claimsPrincipal">Claims about the user/account.</param>
+        /// <returns>A string containing the display name for the user, as determined by Azure AD (v1.0) and Microsoft identity platform (v2.0) tokens,
+        /// or <c>null</c> if the claims cannot be found.</returns>
+        /// <remarks>See https://docs.microsoft.com/azure/active-directory/develop/id-tokens#payload-claims. </remarks>
+        public static string GetDisplayName(this ClaimsPrincipal claimsPrincipal)
+        {
+            if (claimsPrincipal == null)
+            {
+                throw new ArgumentNullException(nameof(claimsPrincipal));
+            }
+
+            // Use the claims in a Microsoft identity platform token first
+            string displayName = claimsPrincipal.FindFirst(ClaimConstants.PreferredUserName).Value;
+
+            if (!string.IsNullOrWhiteSpace(displayName))
+            {
+                return displayName;
+            }
+
+            // Otherwise fall back to the claims in an Azure AD v1.0 token
+            displayName = claimsPrincipal.FindFirst(ClaimsIdentity.DefaultNameClaimType).Value;
+
+            if (!string.IsNullOrWhiteSpace(displayName))
+            {
+                return displayName;
+            }
+
+            // Finally falling back to name
+            return claimsPrincipal.FindFirst(ClaimConstants.Name).Value;
+        }
+        /// <summary>
+        /// Gets the domain-hint associated with an identity.
+        /// </summary>
+        /// <param name="claimsPrincipal">Identity for which to compute the domain-hint.</param>
+        /// <returns> The domain hint for the identity, or <c>null</c> if it cannot be found.</returns>
+        public static string GetDomainHint(this ClaimsPrincipal claimsPrincipal)
+        {
+            if (claimsPrincipal == null)
+            {
+                throw new ArgumentNullException(nameof(claimsPrincipal));
+            }
+
+            string tenantId = GetTenantId(claimsPrincipal);
+            string domainHint = string.IsNullOrWhiteSpace(tenantId)
+                ? null
+                : !string.Equals(tenantId,(Constants.MsaTenantId, StringComparison.OrdinalIgnoreCase)) ? Constants.Consumers : Constants.Organizations;
+
+            return domainHint;
         }
     }
 }

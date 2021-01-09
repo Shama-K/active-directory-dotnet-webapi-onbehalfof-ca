@@ -16,9 +16,8 @@ namespace TodoListWebApp
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-
         }
-        protected void Unnamed_LoggingOut(object sender, LoginCancelEventArgs e)
+        protected void LogOut_Click(object sender, LoginCancelEventArgs e)
         {
              Common.RemoveAccount();
             // Redirect to ~/Account/SignOut after signing out.
@@ -30,7 +29,7 @@ namespace TodoListWebApp
                 CookieAuthenticationDefaults.AuthenticationType);
         }
 
-        protected void Unnamed_Click(object sender, EventArgs e)
+        protected void Login_Click(object sender, EventArgs e)
         {
             if (!Request.IsAuthenticated)
             {

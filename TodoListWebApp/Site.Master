@@ -53,26 +53,30 @@
                         <li><a id="A3" class="nav-link" runat="server" href="~/About">About</a></li>
                         <li><a id="A4" class="nav-link" runat="server" href="~/TodoList/Index">TodoList</a></li>
                     </ul>
+                    </div>
+                    <div class="justify-content-end">
                     <asp:LoginView runat="server" ViewStateMode="Disabled">
                         <LoggedInTemplate>
                             <ul class="nav navbar-nav navbar-right">
-                                <li class="navbar-text">Hello, <%: Context.User.Identity.Name  %>!</li>
+                                <li class="navbar-text">Hello, <%: System.Security.Claims.ClaimsPrincipal.Current.FindFirst("name").Value  %>!</li>
                                 <li class="nav-link">
                                     <asp:LoginStatus runat="server" LogoutAction="Redirect" LogoutText="Sign out"
-                                        LogoutPageUrl="~/" OnLoggingOut="Unnamed_LoggingOut" />
+                                        LogoutPageUrl="~/" OnLoggingOut="LogOut_Click" />
                                 </li>
                             </ul>
                         </LoggedInTemplate>
                         <AnonymousTemplate>
                             <ul class="nav navbar-nav navbar-right">
-                             <li class="nav-link"><asp:LinkButton Text="Sign in" runat="server" OnClick="Unnamed_Click" />
+                             <li class="nav-link"><asp:LinkButton Text="Sign in" runat="server" OnClick="Login_Click" />
                              </li>
                             </ul>
                         </AnonymousTemplate>
                     </asp:LoginView>
-                </div>
+                        </div>
+                <%--</div>--%>
             </div>
         </div>
+        <br />
         <div class="container body-content">
             <asp:ContentPlaceHolder ID="MainContent" runat="server">
             </asp:ContentPlaceHolder>

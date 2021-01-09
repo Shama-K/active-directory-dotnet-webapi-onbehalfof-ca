@@ -227,13 +227,4 @@ namespace TodoList.Shared
             }
         }
     }
-    public static class Extensions
-    {
-        public static string GetAccountId(this ClaimsPrincipal claimsPrincipal)
-        {
-            string oid = claimsPrincipal.GetObjectId();
-            string tid = claimsPrincipal.GetTenantId();
-            return $"{oid}.{tid}";
-        }
-    }
 }

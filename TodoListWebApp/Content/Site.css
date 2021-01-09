@@ -29,3 +29,11 @@ textarea {
         padding: 0;
     }
 }
+
+.tableClass, th, td {
+    border: 1px solid black !important;
+}
+.tableClass thead{
+    background-color:cornflowerblue;
+    color:white;
+}
